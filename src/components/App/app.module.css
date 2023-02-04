@@ -1,0 +1,13 @@
+.container {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-gap: 16px;
+  padding-bottom: 24px;
+}
+
+.error {
+  margin: 20px auto;
+  font-size: 24px;
+  font-weight: bold;
+  color: #cd5c5c;
+}
