@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 import Searchbar from '../Searchbar';
@@ -12,104 +12,88 @@ import { searchImage } from '../../services/image-api';
 
 import css from './app.module.css';
 
-class App extends Component {
-  state = {
-    search: '',
-    page: 1,
-    items: [],
-    loading: false,
-    error: null,
-    showModal: false,
-    targetImage: null,
-    totalHits: 0,
+const App = () => {
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [targetImage, setTargetImage] = useState(null);
+  const [totalHits, setTotalHits] = useState('');
+
+  const onFormSubmit = search => {
+    if (search === query) return;
+    setQuery(search);
+    setPage(1);
+    setItems([]);
+    setError(null);
   };
 
-  componentDidUpdate(_, prevState) {
-    const { search, page } = this.state;
-    if (prevState.search !== search || prevState.page !== page) {
-      this.fetchImage();
+  useEffect(() => {
+    if (query) {
+      const fetchImage = async () => {
+        try {
+          setLoading(true);
+          const { hits, totalHits } = await searchImage(query, page);
+          if (!hits.length) {
+            return Notify.info(
+              'Sorry, there are no images matching your search query. Please try again.',
+              { position: 'center-center', fontSize: '17px' }
+            );
+          }
+          setItems(prevItems => [...prevItems, ...hits]);
+          setTotalHits(totalHits);
+        } catch (error) {
+          setError(error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchImage();
     }
-  }
+  }, [page, query]);
 
-  onFormSubmit = search => {
-    if (search === this.state.search) return;
-    this.setState({ search, page: 1, items: [], error: null });
+  const loadMore = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  async fetchImage() {
-    try {
-      this.setState({ loading: true });
-      const { search, page } = this.state;
-      const { hits, totalHits } = await searchImage(search, page);
-      if (!hits.length) {
-        return Notify.info(
-          'Sorry, there are no images matching your search query. Please try again.',
-          { position: 'center-center', fontSize: '17px' }
-        );
-      }
-      this.setState(({ items }) => ({
-        items: [...items, ...hits],
-        totalHits,
-      }));
-    } catch (error) {
-      this.setState({ error: error });
-    } finally {
-      this.setState({ loading: false });
-    }
-  }
-
-  loadMore = () => {
-    this.setState(({ page }) => ({
-      page: page + 1,
-    }));
-  };
-
-  closeModal = () => {
-    this.setState({
-      showModal: false,
-      // targetImage: null,
+  const showTargetImage = (src, alt) => {
+    setShowModal(true);
+    setTargetImage({
+      src,
+      alt,
     });
   };
 
-  showTargetImage = (src, alt) => {
-    this.setState({
-      showModal: true,
-      targetImage: {
-        src,
-        alt,
-      },
-    });
+  const closeModal = () => {
+    setShowModal(false);
+    setTargetImage(null);
   };
 
-  render() {
-    const { onFormSubmit, loadMore, closeModal, showTargetImage } = this;
-    const { error, items, loading, showModal, targetImage, totalHits, page } =
-      this.state;
+  return (
+    <div className={css.container}>
+      <Searchbar onSubmit={onFormSubmit} />
 
-    return (
-      <div className={css.container}>
-        <Searchbar onSubmit={onFormSubmit} />
+      {error && <p className={css.error}>{error.message}</p>}
 
-        {error && <p className={css.error}>{error.message}</p>}
+      {Boolean(items.length) && (
+        <ImageGallery items={items} openModal={showTargetImage} />
+      )}
 
-        {Boolean(items.length) && (
-          <ImageGallery items={items} openModal={showTargetImage} />
-        )}
+      {loading && <Loader />}
 
-        {loading && <Loader />}
+      {Boolean(items.length) && !loading && page < totalHits / 12 && (
+        <Button onClick={loadMore} />
+      )}
 
-        {Boolean(items.length) && !loading && page < totalHits / 12 && (
-          <Button onClick={loadMore} />
-        )}
-
-        {showModal && (
-          <Modal onClose={closeModal}>
-            <TargetImage {...targetImage} />
-          </Modal>
-        )}
-      </div>
-    );
-  }
-}
+      {showModal && (
+        <Modal onClose={closeModal}>
+          <TargetImage {...targetImage} />
+        </Modal>
+      )}
+    </div>
+  );
+};
 
 export default App;
