@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 import Searchbar from '../Searchbar';
@@ -22,13 +22,16 @@ const App = () => {
   const [targetImage, setTargetImage] = useState(null);
   const [totalHits, setTotalHits] = useState('');
 
-  const onFormSubmit = search => {
-    if (search === query) return;
-    setQuery(search);
-    setPage(1);
-    setItems([]);
-    setError(null);
-  };
+  const onFormSubmit = useCallback(
+    search => {
+      if (search === query) return;
+      setQuery(search);
+      setPage(1);
+      setItems([]);
+      setError(null);
+    },
+    [query]
+  );
 
   useEffect(() => {
     if (query) {
@@ -54,17 +57,17 @@ const App = () => {
     }
   }, [page, query]);
 
-  const loadMore = () => {
+  const loadMore = useCallback(() => {
     setPage(prevPage => prevPage + 1);
-  };
+  }, []);
 
-  const showTargetImage = (src, alt) => {
+  const showTargetImage = useCallback((src, alt) => {
     setShowModal(true);
     setTargetImage({
       src,
       alt,
     });
-  };
+  }, []);
 
   const closeModal = () => {
     setShowModal(false);

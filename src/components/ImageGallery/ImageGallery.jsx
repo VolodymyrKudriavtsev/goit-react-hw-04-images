@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import ImageGalleryItem from 'components/ImageGalleryItem';
 import PropTypes from 'prop-types';
 import css from './image-gallery.module.css';
@@ -28,4 +29,4 @@ ImageGallery.propTypes = {
   openModal: PropTypes.func.isRequired,
 };
 
-export default ImageGallery;
+export default memo(ImageGallery);

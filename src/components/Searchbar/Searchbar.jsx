@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
@@ -18,6 +18,10 @@ const Searchbar = ({ onSubmit }) => {
     onSubmit(search);
   };
 
+  const handleChange = useCallback(e => {
+    setSearch(e.target.value);
+  }, []);
+
   return (
     <header className={css.searchbar}>
       <form className={css.form} onSubmit={handleSubmit}>
@@ -27,7 +31,7 @@ const Searchbar = ({ onSubmit }) => {
 
         <input
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={handleChange}
           name="search"
           className={css.input}
           type="text"
@@ -44,4 +48,4 @@ Searchbar.propTypes = {
   onSubmit: PropTypes.func.isRequired,
 };
 
-export default Searchbar;
+export default memo(Searchbar);
