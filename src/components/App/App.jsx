@@ -67,6 +67,7 @@ class App extends Component {
   closeModal = () => {
     this.setState({
       showModal: false,
+      // targetImage: null,
     });
   };
 
